@@ -3,10 +3,13 @@
 namespace App\Entity;
 
 use ApiPlatform\Core\Annotation\ApiResource;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * @ApiResource()
+ * @ApiResource(normalizationContext={"groups"={"devis", "prestataires"}})
  * @ORM\Entity(repositoryClass="App\Repository\PrestatairesRepository")
  */
 class Prestataires
@@ -20,28 +23,44 @@ class Prestataires
 
     /**
      * @ORM\Column(type="string", length=100)
+     * @Groups({"prestataires"})
      */
     private $nom;
 
     /**
      * @ORM\Column(type="string", length=100, nullable=true)
+     * @Groups({"prestataires"})
      */
     private $prenoms;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
+     * @Groups({"prestataires"})
      */
     private $adresse;
 
     /**
      * @ORM\Column(type="string", length=20, nullable=true)
+     * @Groups({"prestataires"})
      */
     private $telephone;
 
     /**
      * @ORM\Column(type="string", length=100, nullable=true)
+     * @Groups({"prestataires"})
      */
     private $email;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Devis", mappedBy="prestataire")
+     * @Groups({"prestataires"})
+     */
+    private $devis;
+
+    public function __construct()
+    {
+        $this->devis = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -104,6 +123,37 @@ class Prestataires
     public function setEmail(?string $email): self
     {
         $this->email = $email;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Devis[]
+     */
+    public function getDevis(): Collection
+    {
+        return $this->devis;
+    }
+
+    public function addDevi(Devis $devi): self
+    {
+        if (!$this->devis->contains($devi)) {
+            $this->devis[] = $devi;
+            $devi->setPrestataire($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDevi(Devis $devi): self
+    {
+        if ($this->devis->contains($devi)) {
+            $this->devis->removeElement($devi);
+            // set the owning side to null (unless already changed)
+            if ($devi->getPrestataire() === $this) {
+                $devi->setPrestataire(null);
+            }
+        }
 
         return $this;
     }
